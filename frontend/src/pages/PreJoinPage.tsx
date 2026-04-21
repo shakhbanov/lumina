@@ -122,12 +122,9 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
     if (onJoin) {
       onJoin(finalName, cameraOn, micOn);
     } else {
-      // Preserve the current fragment (#key=...) so MeetingPage can enable
-      // E2EE with the same key as every other participant.
-      navigate(
-        { pathname: `/room/${code}`, hash: window.location.hash },
-        { state: { name: finalName, cameraOn, micOn } },
-      );
+      navigate(`/room/${code}`, {
+        state: { name: finalName, cameraOn, micOn },
+      });
     }
   }
 

@@ -113,7 +113,35 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
     setLocalParticipantInfo(extractParticipantInfo(room.localParticipant, true));
   }, [extractParticipantInfo]);
 
-  const connect = useCallback(async (url: string, token: string, previewStream?: MediaStream | null, cameraOn = true, micOn = true) => {
+  // Make sure the camera publication has a live MediaStreamTrack. Called after
+  // screen share ends — in some browsers the camera track gets into a stale
+  // state (readyState=ended or pub.track=null) while screen capture was active.
+  const ensureCameraHealthy = useCallback(async () => {
+    const room = roomRef.current;
+    if (!room) return;
+    if (!room.localParticipant.isCameraEnabled) return;
+    const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    const track = pub?.track as LocalVideoTrack | undefined;
+    const live = track && track.mediaStreamTrack?.readyState === 'live' && !track.isMuted;
+    if (live) return;
+    try {
+      // Republish by toggling — cheapest way to force LiveKit to re-acquire.
+      await room.localParticipant.setCameraEnabled(false);
+      await room.localParticipant.setCameraEnabled(true);
+    } catch (err) {
+      console.warn('[LiveKit] Failed to restore camera after screen share', err);
+    }
+    updateLocalParticipant();
+  }, [updateLocalParticipant]);
+
+  const connect = useCallback(async (
+    url: string,
+    token: string,
+    previewStream?: MediaStream | null,
+    cameraOn = true,
+    micOn = true,
+    e2eePassphraseOverride?: string,
+  ) => {
     // Disconnect existing room if any
     if (roomRef.current) {
       await roomRef.current.disconnect();
@@ -122,13 +150,15 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
     // Mobile: 480p, no simulcast, VP8. Desktop: 720p, simulcast, VP8.
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-    // E2EE setup
-    const e2eeEnabled = !!optionsRef.current.e2eePassphrase && isE2EESupported();
+    // E2EE setup — prefer the explicit override (freshly minted key) over the
+    // hook option so we don't race React state on first connect.
+    const passphrase = e2eePassphraseOverride || optionsRef.current.e2eePassphrase;
+    const e2eeEnabled = !!passphrase && isE2EESupported();
     let e2eeOptions: E2EEOptions | undefined;
     if (e2eeEnabled) {
       const keyProvider = new ExternalE2EEKeyProvider();
       keyProviderRef.current = keyProvider;
-      await keyProvider.setKey(optionsRef.current.e2eePassphrase!);
+      await keyProvider.setKey(passphrase!);
       e2eeOptions = {
         keyProvider,
         worker: new Worker(
@@ -231,8 +261,14 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       updateLocalParticipant();
     });
 
-    room.on(RoomEvent.LocalTrackUnpublished, (_pub: LocalTrackPublication, _participant: LocalParticipant) => {
+    room.on(RoomEvent.LocalTrackUnpublished, (pub: LocalTrackPublication, _participant: LocalParticipant) => {
       updateLocalParticipant();
+      // When the user clicks the browser's "Stop sharing" bar (not our
+      // toolbar), LiveKit unpublishes the screen track automatically. The
+      // camera sometimes lands in a stale state, so re-validate it here too.
+      if (pub.source === Track.Source.ScreenShare) {
+        ensureCameraHealthy();
+      }
     });
 
     // Active speakers — only update speaker list, no re-render of participants
@@ -324,7 +360,7 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       console.error('[LiveKit] Connection error:', err);
       throw err;
     }
-  }, [updateRemoteParticipants, updateLocalParticipant]);
+  }, [updateRemoteParticipants, updateLocalParticipant, ensureCameraHealthy]);
 
   const disconnect = useCallback(async () => {
     const room = roomRef.current;
@@ -364,6 +400,10 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
         resolution: VideoPresets.h1080.resolution,
         contentHint: 'detail',
       });
+      if (enabled) {
+        // Screen share was just turned OFF — ensure camera track is live.
+        await ensureCameraHealthy();
+      }
       updateLocalParticipant();
       return !enabled;
     } catch (err) {
@@ -376,7 +416,7 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       }
       return enabled;
     }
-  }, [updateLocalParticipant]);
+  }, [updateLocalParticipant, ensureCameraHealthy]);
 
   // Flip between front and back camera (mobile)
   const facingModeRef = useRef<'user' | 'environment'>('user');

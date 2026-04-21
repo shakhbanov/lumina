@@ -54,22 +54,11 @@ export function LandingPage() {
     dispatch({ type: 'SET_ERROR', value: '' });
     try {
       const { code, creatorToken } = await createRoom();
-      // creator_token is single-use; cache it under sessionStorage keyed by
-      // room code so the creator's first navigation into the room can mint
-      // the host token without leaking it into the share URL.
+      // creator_token is one-shot; cache it to mint the host token on first
+      // navigation into the meeting.
       sessionStorage.setItem(`lumina:creator:${code}`, creatorToken);
 
-      // Generate a 256-bit E2EE key, keep it only in the URL fragment so the
-      // server never sees it. Anyone the creator shares the link with gets
-      // the key; no one else can derive it from the room code.
-      const keyBytes = new Uint8Array(32);
-      crypto.getRandomValues(keyBytes);
-      const keyB64 = btoa(String.fromCharCode(...keyBytes))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-      const link = `${window.location.origin}/room/${code}#key=${keyB64}`;
+      const link = `${window.location.origin}/room/${code}`;
       dispatch({ type: 'SET_CREATED_LINK', value: link });
     } catch {
       dispatch({ type: 'SET_ERROR', value: t('landing.error.create') });
@@ -110,16 +99,8 @@ export function LandingPage() {
   }
 
   function handleGoToRoom() {
-    // Preserve the #key=... fragment from the share link — without it the
-    // creator would enter the room without the E2EE key that the invitee
-    // already has, and LiveKit would fail to decrypt cross-peer video.
-    try {
-      const url = new URL(state.createdLink);
-      navigate({ pathname: `${url.pathname}/preview`, hash: url.hash });
-    } catch {
-      const match = state.createdLink.match(/\/room\/([a-z0-9]+)/);
-      if (match) navigate(`/room/${match[1]}/preview`);
-    }
+    const match = state.createdLink.match(/\/room\/([a-z0-9]+)/);
+    if (match) navigate(`/room/${match[1]}/preview`);
   }
 
   return (

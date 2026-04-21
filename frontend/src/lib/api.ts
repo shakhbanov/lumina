@@ -12,6 +12,7 @@ export interface ParticipantTokens {
   joinToken: string;
   identity: string;
   url: string;
+  e2eeKey: string;
 }
 
 export async function createRoom(): Promise<CreatedRoom> {
@@ -51,6 +52,7 @@ export async function mintParticipantToken(
     joinToken: data.join_token,
     identity: data.identity,
     url: data.url,
+    e2eeKey: data.e2ee_key || '',
   };
 }
 
@@ -74,6 +76,7 @@ export async function joinRoomPublic(
     joinToken: data.join_token,
     identity: data.identity,
     url: data.url,
+    e2eeKey: data.e2ee_key || '',
   };
 }
 

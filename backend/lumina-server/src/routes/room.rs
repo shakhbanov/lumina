@@ -67,6 +67,9 @@ pub async fn create_room(
 
     let code = state.generate_room_code();
     let creator_token = auth::create_room_creator_token(&state.config.jwt_secret, &code);
+    // Per-room E2EE key: 32 random bytes, base64-urlsafe. Handed to every
+    // authenticated joiner; the SFU (LiveKit) still doesn't see it.
+    let e2ee_key = generate_e2ee_key();
 
     let room = crate::state::redis_store::RedisRoom {
         code: code.clone(),
@@ -88,6 +91,13 @@ pub async fn create_room(
         ));
     }
 
+    if let Err(e) = state.redis.set_e2ee_key(&code, &e2ee_key).await {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": format!("Failed to init E2EE key: {e}")})),
+        ));
+    }
+
     crate::metrics::ROOMS_CREATED_TOTAL.inc();
     crate::metrics::ROOMS_ACTIVE.inc();
 
@@ -96,6 +106,14 @@ pub async fn create_room(
         creator_token,
         code,
     }))
+}
+
+fn generate_e2ee_key() -> String {
+    use base64::Engine;
+    use rand::RngCore;
+    let mut bytes = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut bytes);
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
 
 #[derive(Serialize)]
@@ -149,6 +167,7 @@ pub struct TokenResponse {
     /// Server-generated participant identity.
     pub identity: String,
     pub url: String,
+    pub e2ee_key: String,
 }
 
 /// Mint a participant token for a room.
@@ -169,6 +188,7 @@ pub struct JoinRoomResponse {
     pub join_token: String,
     pub identity: String,
     pub url: String,
+    pub e2ee_key: String,
 }
 
 /// Public join endpoint — mints a plain participant token for anyone with a
@@ -223,12 +243,20 @@ pub async fn join_room_public(
     })?;
 
     let join_token = auth::create_join_token(&state.config.jwt_secret, &code, &identity);
+    let e2ee_key = state
+        .redis
+        .get_e2ee_key(&code)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
 
     Ok(Json(JoinRoomResponse {
         livekit_token,
         join_token,
         identity,
         url: state.config.livekit_url.clone(),
+        e2ee_key,
     }))
 }
 
@@ -321,11 +349,19 @@ pub async fn get_livekit_token(
     })?;
 
     let join_token = auth::create_join_token(&state.config.jwt_secret, &code, &identity);
+    let e2ee_key = state
+        .redis
+        .get_e2ee_key(&code)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
 
     Ok(Json(TokenResponse {
         livekit_token,
         join_token,
         identity,
         url: state.config.livekit_url.clone(),
+        e2ee_key,
     }))
 }

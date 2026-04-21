@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { ConnectionState } from 'livekit-client';
 import { Header } from './Header';
 import { VideoGrid } from './VideoGrid';
@@ -27,15 +27,22 @@ interface MeetingRoomProps {
   userName: string;
   initialCamera: boolean;
   initialMic: boolean;
-  e2eePassphrase?: string;
   onLeave: () => void;
 }
 
-export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, e2eePassphrase, onLeave }: MeetingRoomProps) {
+export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, onLeave }: MeetingRoomProps) {
   const [state, dispatch] = useMeetingReducer();
   const previewStreamRef = useRef(takeStream());
   const lkConnectedRef = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // E2EE key is server-supplied at token mint time and cached in session so
+  // reconnects don't need a second round-trip. Everyone in the room gets the
+  // same key; the LiveKit SFU never sees it (it lives only in /api responses
+  // under TLS and in the browser's memory).
+  const [e2eePassphrase, setE2eePassphrase] = useState<string | undefined>(() => {
+    const cached = sessionStorage.getItem(`lumina:roomkey:${roomCode}`);
+    return cached && cached.length >= 16 ? cached : undefined;
+  });
 
   const { toasts, addToast, removeToast } = useToasts();
   const ws = useWebSocket();
@@ -106,10 +113,14 @@ export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, e2e
         if (cancelled) return;
 
         sessionStorage.setItem(joinKey, tokens.joinToken);
+        if (tokens.e2eeKey) {
+          sessionStorage.setItem(`lumina:roomkey:${roomCode}`, tokens.e2eeKey);
+          setE2eePassphrase(tokens.e2eeKey);
+        }
 
         dispatch({ type: 'SET_PARTICIPANT_ID', id: tokens.identity });
         ws.connect(roomCode, tokens.joinToken);
-        await lk.connect(tokens.url, tokens.livekitToken, previewStreamRef.current, initialCamera, initialMic);
+        await lk.connect(tokens.url, tokens.livekitToken, previewStreamRef.current, initialCamera, initialMic, tokens.e2eeKey || undefined);
       } catch (err) {
         console.error('[MeetingRoom] Failed to connect:', err);
         if (!cancelled) {

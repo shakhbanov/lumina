@@ -160,6 +160,26 @@ impl RedisStore {
             .await
     }
 
+    /// Set a per-room E2EE key. SFU never sees it, but the signalling server
+    /// hands it out to authenticated joiners so every participant can decrypt
+    /// each other's media without the user copy-pasting a key.
+    pub async fn set_e2ee_key(
+        &self,
+        code: &str,
+        key: &str,
+    ) -> Result<(), redis::RedisError> {
+        let mut conn = self.conn.clone();
+        conn.hset(format!("room:{code}"), "e2ee_key", key).await
+    }
+
+    pub async fn get_e2ee_key(
+        &self,
+        code: &str,
+    ) -> Result<Option<String>, redis::RedisError> {
+        let mut conn = self.conn.clone();
+        conn.hget(format!("room:{code}"), "e2ee_key").await
+    }
+
     pub async fn delete_room(&self, code: &str) -> Result<(), redis::RedisError> {
         let mut conn = self.conn.clone();
         redis::pipe()
