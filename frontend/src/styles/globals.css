@@ -290,3 +290,21 @@ body {
 .leave-btn:active {
   transform: scale(0.95);
 }
+
+/* Hide WebKit/Safari and Chromium overlay play/pause buttons on <video>.
+   Video tiles render media that autoplays muted, so native controls just
+   show up when autoplay is briefly blocked — a pointer-less, "no-overlay"
+   state is what we want in meetings. */
+video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
+}
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

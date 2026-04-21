@@ -143,7 +143,10 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
             autoPlay
             playsInline
             muted
-            className={`w-full h-full object-cover -scale-x-100 ${cameraOn ? '' : 'hidden'}`}
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+            className={`w-full h-full object-cover -scale-x-100 pointer-events-none ${cameraOn ? '' : 'hidden'}`}
           />
           {!cameraOn && (
             <div className="w-full h-full flex items-center justify-center">

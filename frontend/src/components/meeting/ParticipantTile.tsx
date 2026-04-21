@@ -93,7 +93,10 @@ export const ParticipantTile = memo(function ParticipantTile({
           autoPlay
           playsInline
           muted
-          className={`w-full h-full ${fit} ${mirror ? '-scale-x-100' : ''}`}
+          controls={false}
+          disablePictureInPicture
+          controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+          className={`w-full h-full ${fit} pointer-events-none select-none ${mirror ? '-scale-x-100' : ''}`}
         />
       ) : isConnecting ? (
         <div className="w-full h-full flex items-center justify-center bg-[var(--bg-secondary)] skeleton-pulse">
