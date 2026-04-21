@@ -45,7 +45,10 @@ export function LandingPage() {
   const [searchParams] = useSearchParams();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [installOpen, setInstallOpen] = useState(false);
-  const { installed } = usePwaInstall();
+  const { installed, platform } = usePwaInstall();
+  // The install CTA is a mobile-only affordance — on desktop users can use
+  // the browser's address-bar install icon if they want a standalone window.
+  const showInstallCta = !installed && (platform === 'ios' || platform === 'android');
 
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
@@ -194,7 +197,7 @@ export function LandingPage() {
           <p className="text-[var(--danger)] text-sm text-center">{state.error}</p>
         )}
 
-        {!installed && (
+        {showInstallCta && (
           <button
             onClick={() => setInstallOpen(true)}
             className="w-full h-11 mt-2 rounded-xl text-sm text-[var(--text-secondary)] hover:text-white
