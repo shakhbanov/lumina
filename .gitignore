@@ -1,0 +1,33 @@
+# Rust
+backend/target/
+backend/**/*.rs.bk
+target/
+
+# Rust doctor cache
+.rust-doctor-cache.json
+
+# Node
+node_modules/
+frontend/dist/
+frontend/node_modules/
+# Environment
+.env
+!.env.example
+!deploy/.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# PWA generated
+frontend/public/sw.js
+frontend/public/workbox-*.js

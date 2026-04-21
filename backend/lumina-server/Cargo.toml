@@ -1,0 +1,57 @@
+[package]
+name = "lumina-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+description.workspace = true
+
+[dependencies]
+lumina-protocol = { path = "../lumina-protocol" }
+
+# Web framework
+axum = { version = "0.7", features = ["ws", "macros"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "compression-full", "trace", "set-header"] }
+
+# Async runtime
+tokio.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Logging & tracing
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Utils
+uuid.workspace = true
+dashmap = "5"
+rand = "0.8"
+hmac = "0.12"
+sha1 = "0.10"
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+futures-util = "0.3"
+
+# Config
+dotenvy = "0.15"
+
+# Redis (distributed state + pubsub)
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+
+# Auth
+jsonwebtoken = "9"
+
+# Metrics
+prometheus = "0.13"
+# LazyLock from std used instead of lazy_static
+
+# Networking
+bytes = "1"
+
+# Input validation
+regex = "1"

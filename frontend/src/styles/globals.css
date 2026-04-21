@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #6366f1;
+  --accent-fg: #ffffff;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1e1e1e;
+  --bg-hover: #262626;
+  --border: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Safe area for iOS notch */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left { padding-left: env(safe-area-inset-left); }
+.safe-right { padding-right: env(safe-area-inset-right); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Video tiles */
+.video-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+
+.video-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Audio bars animation */
+@keyframes audioBar {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+
+.audio-bar {
+  animation: audioBar 0.4s ease-in-out infinite;
+}
+
+.audio-bar:nth-child(2) { animation-delay: 0.1s; }
+.audio-bar:nth-child(3) { animation-delay: 0.2s; }
+.audio-bar:nth-child(4) { animation-delay: 0.15s; }
+.audio-bar:nth-child(5) { animation-delay: 0.05s; }
+
+/* Reaction bubble — rises from bottom, grows, fades */
+@keyframes reactionBubble {
+  0% {
+    bottom: 10%;
+    opacity: 0;
+    transform: translateX(-50%) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.2);
+  }
+  40% {
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    bottom: 70%;
+    opacity: 0;
+    transform: translateX(-50%) scale(1.3);
+  }
+}
+
+.reaction-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: reactionBubble 3s ease-out forwards;
+}
+
+/* Pulse animation for recording indicator */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-red {
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+/* Toolbar button styles */
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toolbar-btn:hover {
+  background: var(--bg-hover);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.92);
+}
+
+.toolbar-btn.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.toolbar-btn.danger {
+  background: var(--danger);
+  color: white;
+}
+
+.toolbar-btn.danger:hover {
+  background: #dc2626;
+}
+
+/* Glass effect for overlays — no blur on mobile to save GPU */
+.glass {
+  background: rgba(10, 10, 10, 0.92);
+}
+
+@media (min-width: 768px) {
+  .glass {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* ── Sidebar slide-in animation ── */
+.sidebar-enter {
+  animation: sidebarSlideIn 200ms ease-out forwards;
+}
+
+@keyframes sidebarSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ── Toast animations ── */
+@keyframes toastIn {
+  from { transform: translateY(-12px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+
+@keyframes toastOut {
+  from { transform: translateY(0)     scale(1);    opacity: 1; }
+  to   { transform: translateY(-12px) scale(0.96); opacity: 0; }
+}
+
+.toast-enter {
+  animation: toastIn 200ms ease-out forwards;
+}
+
+.toast-exit {
+  animation: toastOut 150ms ease-in forwards;
+}
+
+/* ── Modal overlay ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.modal-overlay {
+  animation: fadeIn 150ms ease-out forwards;
+}
+
+.modal-content {
+  animation: modalScaleIn 150ms ease-out forwards;
+}
+
+/* ── Speaking glow ── */
+.speaking-ring {
+  box-shadow: 0 0 0 3px var(--success), 0 0 12px rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+}
+
+/* ── Skeleton pulse for connecting state ── */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* ── Connection banner ── */
+@keyframes bannerSlideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+.banner-slide-down {
+  animation: bannerSlideDown 200ms ease-out forwards;
+}
+
+/* ── Reaction picker ── */
+@keyframes pickerPop {
+  from { transform: translateY(8px) scale(0.9); opacity: 0; }
+  to   { transform: translateY(0)   scale(1);   opacity: 1; }
+}
+
+.picker-pop {
+  animation: pickerPop 150ms ease-out forwards;
+}
+
+/* ── Grid page transition ── */
+.grid-page {
+  animation: gridFadeIn 200ms ease-out;
+}
+
+@keyframes gridFadeIn {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+/* ── Toolbar divider ── */
+.toolbar-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* ── Leave button pill ── */
+.leave-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: var(--danger);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.leave-btn:hover {
+  background: #dc2626;
+}
+
+.leave-btn:active {
+  transform: scale(0.95);
+}

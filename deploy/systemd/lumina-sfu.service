@@ -1,0 +1,35 @@
+[Unit]
+Description=Lumina SFU Sidecar (mediasoup)
+After=network.target
+Wants=lumina-backend.service
+
+[Service]
+Type=simple
+User=lumina
+Group=lumina
+WorkingDirectory=/opt/lumina/sfu-sidecar
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=3
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+EnvironmentFile=/opt/lumina/.env
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=true
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits — mediasoup C++ workers need more memory
+MemoryMax=4G
+CPUQuota=800%
+LimitNOFILE=65536
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lumina-sfu
+
+[Install]
+WantedBy=multi-user.target

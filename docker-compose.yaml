@@ -1,0 +1,50 @@
+services:
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Backend (Rust API + WebSocket) ──
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      LUMINA_HOST: 0.0.0.0
+      LUMINA_PORT: 8080
+    expose:
+      - "8080"
+    networks:
+      - default
+      - shared-proxy
+
+  # ── Frontend (Nginx + SPA) ──
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    networks:
+      - default
+      - shared-proxy
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+  shared-proxy:
+    external: true

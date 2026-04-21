@@ -1,0 +1,41 @@
+[Unit]
+Description=Lumina Backend Server
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lumina
+Group=lumina
+WorkingDirectory=/opt/lumina
+ExecStart=/opt/lumina/bin/lumina-server
+Restart=always
+RestartSec=3
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Environment
+EnvironmentFile=/opt/lumina/.env
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=true
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/var/log/lumina
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=400%
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lumina-backend
+
+[Install]
+WantedBy=multi-user.target

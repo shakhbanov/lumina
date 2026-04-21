@@ -1,0 +1,20 @@
+[Unit]
+Description=Lumina TURN Server (coturn)
+After=network.target
+Documentation=https://github.com/coturn/coturn
+
+[Service]
+Type=simple
+User=turnserver
+Group=turnserver
+ExecStart=/usr/bin/turnserver -c /etc/turnserver.conf
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coturn
+
+[Install]
+WantedBy=multi-user.target
