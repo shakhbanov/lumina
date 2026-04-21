@@ -1,9 +1,11 @@
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Video, ArrowRight, Plus, Copy, Check, Link, Users } from 'lucide-react';
+import { Video, ArrowRight, Plus, Copy, Check, Link, Users, Download } from 'lucide-react';
 
 import { createRoom, checkRoomExists } from '../lib/api';
 import { t } from '../lib/i18n';
+import { InstallModal } from '../components/pwa/InstallModal';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 
 interface State {
   loading: boolean;
@@ -42,6 +44,8 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [installOpen, setInstallOpen] = useState(false);
+  const { installed } = usePwaInstall();
 
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
@@ -189,7 +193,20 @@ export function LandingPage() {
         {state.error && (
           <p className="text-[var(--danger)] text-sm text-center">{state.error}</p>
         )}
+
+        {!installed && (
+          <button
+            onClick={() => setInstallOpen(true)}
+            className="w-full h-11 mt-2 rounded-xl text-sm text-[var(--text-secondary)] hover:text-white
+              flex items-center justify-center gap-2 transition"
+          >
+            <Download className="w-4 h-4" />
+            {t('install.cta')}
+          </button>
+        )}
       </div>
+
+      <InstallModal open={installOpen} onClose={() => setInstallOpen(false)} />
     </div>
   );
 }

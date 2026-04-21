@@ -18,14 +18,21 @@ export default defineConfig({
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui', 'browser'],
         orientation: 'any',
         start_url: '/',
         scope: '/',
         id: '/',
+        // Android Chrome 96+, Samsung Internet and Edge route in-scope links
+        // straight into the installed PWA when handle_links: 'preferred' is
+        // set. Combined with launch_handler navigate-existing, an incoming
+        // /room/<code> link re-uses the already-open window instead of
+        // spawning a new one.
         handle_links: 'preferred',
         launch_handler: {
-          client_mode: 'navigate-existing',
+          client_mode: ['navigate-existing', 'auto'],
         },
+        prefer_related_applications: false,
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },

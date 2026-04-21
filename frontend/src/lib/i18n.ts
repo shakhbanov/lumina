@@ -79,6 +79,26 @@ const translations: Record<Locale, Record<string, string>> = {
     'chat.title': 'Чат',
     'chat.empty': 'Сообщений пока нет',
     'chat.placeholder': 'Сообщение...',
+
+    // PWA install
+    'install.cta': 'Установить приложение',
+    'install.title': 'Установить Lumina',
+    'install.subtitle': 'Работает офлайн, открывает ссылки напрямую в приложении, без адресной строки.',
+    'install.button': 'Установить',
+    'install.installed': 'Приложение установлено',
+    'install.close': 'Готово',
+    'install.ios.title': 'На iPhone и iPad',
+    'install.ios.step1': 'Откройте lumina.su в Safari (не в Chrome и не в других браузерах).',
+    'install.ios.step2': 'Нажмите кнопку «Поделиться» внизу экрана (квадрат со стрелкой вверх).',
+    'install.ios.step3': 'Выберите «На экран «Домой»» и подтвердите добавление.',
+    'install.ios.step4': 'Открывайте Lumina с главного экрана — ссылки на встречи попросите присылать, затем открывайте уже внутри приложения. Apple не умеет автоматически передавать ссылку в установленное PWA.',
+    'install.android.title': 'На Android',
+    'install.android.step1': 'Откройте lumina.su в Chrome, Samsung Internet или Edge.',
+    'install.android.step2': 'Нажмите кнопку «Установить» ниже. Если она не появилась — откройте меню браузера и выберите «Установить приложение» / «Добавить на главный экран».',
+    'install.android.step3': 'Теперь ссылки вида lumina.su/room/... будут открываться сразу в приложении.',
+    'install.desktop.title': 'На компьютере',
+    'install.desktop.step1': 'В Chrome или Edge нажмите значок установки в правой части адресной строки.',
+    'install.desktop.step2': 'Подтвердите установку — приложение появится в списке программ.',
   },
 
   en: {
@@ -159,6 +179,26 @@ const translations: Record<Locale, Record<string, string>> = {
     'chat.title': 'Chat',
     'chat.empty': 'No messages yet',
     'chat.placeholder': 'Message...',
+
+    // PWA install
+    'install.cta': 'Install app',
+    'install.title': 'Install Lumina',
+    'install.subtitle': 'Works offline and opens meeting links straight in the app, without the address bar.',
+    'install.button': 'Install',
+    'install.installed': 'App already installed',
+    'install.close': 'Done',
+    'install.ios.title': 'On iPhone and iPad',
+    'install.ios.step1': 'Open lumina.su in Safari (not Chrome or any other browser).',
+    'install.ios.step2': 'Tap the Share button at the bottom of the screen (square with an up arrow).',
+    'install.ios.step3': 'Choose "Add to Home Screen" and confirm.',
+    'install.ios.step4': 'Open Lumina from the home screen. For meeting links, ask the sender to share the URL and then paste/open it inside the app — Apple does not auto-route links into installed PWAs.',
+    'install.android.title': 'On Android',
+    'install.android.step1': 'Open lumina.su in Chrome, Samsung Internet, or Edge.',
+    'install.android.step2': 'Tap the Install button below. If it is missing, open the browser menu and pick "Install app" / "Add to home screen".',
+    'install.android.step3': 'From now on lumina.su/room/... links will open directly in the app.',
+    'install.desktop.title': 'On desktop',
+    'install.desktop.step1': 'In Chrome or Edge click the install icon on the right side of the address bar.',
+    'install.desktop.step2': 'Confirm — the app will appear in your application list.',
   },
 };
 
