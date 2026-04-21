@@ -42,12 +42,19 @@ export const ParticipantTile = memo(function ParticipantTile({
 
   const videoRefCallback = useCallback((el: HTMLVideoElement | null) => {
     videoElRef.current = el;
-    if (el && activeStream && el.srcObject !== activeStream) {
+    if (!el) return;
+    // Force muted as a DOM property (React's JSX attribute doesn't always
+    // stick across reattachments). Without this, Safari draws a huge
+    // tap-to-play overlay because it considers the video "not autoplayable".
+    el.muted = true;
+    el.defaultMuted = true;
+    el.setAttribute('muted', '');
+    el.setAttribute('playsinline', '');
+    el.setAttribute('webkit-playsinline', 'true');
+    if (activeStream && el.srcObject !== activeStream) {
       el.srcObject = activeStream;
     }
-    // Browsers block autoplay if anything looks off; muting + explicit play()
-    // keeps the frame visible instead of a click-to-play overlay.
-    el?.play().catch(() => {});
+    el.play().catch(() => {});
   }, [activeStream]);
 
   // Re-attach / replay when the stream object changes under the same element.
@@ -69,6 +76,25 @@ export const ParticipantTile = memo(function ParticipantTile({
     tracks.forEach((tr) => tr.addEventListener('unmute', onUnmute));
     return () => tracks.forEach((tr) => tr.removeEventListener('unmute', onUnmute));
   }, [activeStream]);
+
+  // Safari/iOS pause videos when the tab is backgrounded, then show a large
+  // tap-to-play overlay when the user returns. Resume playback ourselves so
+  // the overlay never has a reason to appear.
+  useEffect(() => {
+    const replay = () => {
+      const el = videoElRef.current;
+      if (!el || !el.srcObject) return;
+      if (el.paused) el.play().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', replay);
+    window.addEventListener('focus', replay);
+    window.addEventListener('pageshow', replay);
+    return () => {
+      document.removeEventListener('visibilitychange', replay);
+      window.removeEventListener('focus', replay);
+      window.removeEventListener('pageshow', replay);
+    };
+  }, []);
 
   // Trust LiveKit's signals (participant.isCameraOff / isScreenSharing) rather
   // than MediaStreamTrack.muted — the latter is briefly true on subscribe and
@@ -95,6 +121,10 @@ export const ParticipantTile = memo(function ParticipantTile({
           muted
           controls={false}
           disablePictureInPicture
+          // `disableRemotePlayback` stops browsers (Safari in particular)
+          // from drawing an AirPlay / cast overlay on top of the tile.
+          // @ts-expect-error — valid HTML attribute, not in React's types
+          disableRemotePlayback=""
           controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
           className={`w-full h-full ${fit} pointer-events-none select-none ${mirror ? '-scale-x-100' : ''}`}
         />

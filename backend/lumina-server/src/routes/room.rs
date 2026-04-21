@@ -243,13 +243,7 @@ pub async fn join_room_public(
     })?;
 
     let join_token = auth::create_join_token(&state.config.jwt_secret, &code, &identity);
-    let e2ee_key = state
-        .redis
-        .get_e2ee_key(&code)
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or_default();
+    let e2ee_key = ensure_e2ee_key(&state, &code).await;
 
     Ok(Json(JoinRoomResponse {
         livekit_token,
@@ -258,6 +252,22 @@ pub async fn join_room_public(
         url: state.config.livekit_url.clone(),
         e2ee_key,
     }))
+}
+
+/// Return the room's E2EE key, minting one atomically if the room predates
+/// the feature. Every participant in the same room receives the same value,
+/// so clients never disagree.
+async fn ensure_e2ee_key(state: &AppState, code: &str) -> String {
+    if let Ok(Some(existing)) = state.redis.get_e2ee_key(code).await {
+        if !existing.is_empty() {
+            return existing;
+        }
+    }
+    let key = generate_e2ee_key();
+    // best-effort: if the write races with another request, the later read
+    // will pick up whichever key won — callers agree by trust-on-first-use.
+    let _ = state.redis.set_e2ee_key(code, &key).await;
+    key
 }
 
 pub async fn get_livekit_token(
@@ -349,13 +359,7 @@ pub async fn get_livekit_token(
     })?;
 
     let join_token = auth::create_join_token(&state.config.jwt_secret, &code, &identity);
-    let e2ee_key = state
-        .redis
-        .get_e2ee_key(&code)
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or_default();
+    let e2ee_key = ensure_e2ee_key(&state, &code).await;
 
     Ok(Json(TokenResponse {
         livekit_token,

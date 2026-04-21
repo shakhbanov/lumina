@@ -291,20 +291,35 @@ body {
   transform: scale(0.95);
 }
 
-/* Hide WebKit/Safari and Chromium overlay play/pause buttons on <video>.
-   Video tiles render media that autoplays muted, so native controls just
-   show up when autoplay is briefly blocked — a pointer-less, "no-overlay"
-   state is what we want in meetings. */
-video::-webkit-media-controls {
-  display: none !important;
-  -webkit-appearance: none;
-}
+/* Hide every browser-rendered overlay/control on <video> tiles.
+   The meeting layout never needs play/pause, AirPlay, picture-in-picture,
+   fullscreen, download or the Safari/iOS "tap to play" start button. */
+video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
 video::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel-container,
+video::-webkit-media-controls-overlay-enclosure,
 video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-pause-button,
 video::-webkit-media-controls-start-playback-button,
-video::-webkit-media-controls-overlay-play-button {
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-overlay-cast-button,
+video::-webkit-media-controls-fullscreen-button,
+video::-webkit-media-controls-volume-slider,
+video::-webkit-media-controls-timeline,
+video::-webkit-media-controls-time-remaining-display,
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-mute-button,
+video::-webkit-media-controls-toggle-closed-captions-button,
+video::-webkit-media-text-track-container {
   display: none !important;
-  -webkit-appearance: none;
+  -webkit-appearance: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+video {
+  -webkit-appearance: none;
 }

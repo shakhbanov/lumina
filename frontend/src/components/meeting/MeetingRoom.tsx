@@ -35,14 +35,10 @@ export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, onL
   const previewStreamRef = useRef(takeStream());
   const lkConnectedRef = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  // E2EE key is server-supplied at token mint time and cached in session so
-  // reconnects don't need a second round-trip. Everyone in the room gets the
-  // same key; the LiveKit SFU never sees it (it lives only in /api responses
-  // under TLS and in the browser's memory).
-  const [e2eePassphrase, setE2eePassphrase] = useState<string | undefined>(() => {
-    const cached = sessionStorage.getItem(`lumina:roomkey:${roomCode}`);
-    return cached && cached.length >= 16 ? cached : undefined;
-  });
+  // E2EE key is server-authoritative — we never seed it from sessionStorage
+  // on the initial connect. Doing so caused asymmetric E2EE when one side
+  // had a stale cached key and the other didn't.
+  const [e2eePassphrase, setE2eePassphrase] = useState<string | undefined>(undefined);
 
   const { toasts, addToast, removeToast } = useToasts();
   const ws = useWebSocket();
@@ -113,9 +109,16 @@ export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, onL
         if (cancelled) return;
 
         sessionStorage.setItem(joinKey, tokens.joinToken);
-        if (tokens.e2eeKey) {
-          sessionStorage.setItem(`lumina:roomkey:${roomCode}`, tokens.e2eeKey);
+        // Trust the server's answer verbatim: either use its key or disable
+        // E2EE entirely and wipe any stale cached key. This prevents the
+        // "one side encrypts, the other does not" split-brain.
+        const roomKeyStorageKey = `lumina:roomkey:${roomCode}`;
+        if (tokens.e2eeKey && tokens.e2eeKey.length >= 16) {
+          sessionStorage.setItem(roomKeyStorageKey, tokens.e2eeKey);
           setE2eePassphrase(tokens.e2eeKey);
+        } else {
+          sessionStorage.removeItem(roomKeyStorageKey);
+          setE2eePassphrase(undefined);
         }
 
         dispatch({ type: 'SET_PARTICIPANT_ID', id: tokens.identity });

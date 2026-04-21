@@ -79,7 +79,14 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
         stream.getVideoTracks().forEach((t) => (t.enabled = cameraOn));
         stream.getAudioTracks().forEach((t) => (t.enabled = micOn));
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          const el = videoRef.current;
+          el.muted = true;
+          el.defaultMuted = true;
+          el.setAttribute('muted', '');
+          el.setAttribute('playsinline', '');
+          el.setAttribute('webkit-playsinline', 'true');
+          el.srcObject = stream;
+          el.play().catch(() => {});
         }
       } catch {
         // Camera/mic not available
@@ -145,6 +152,8 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
             muted
             controls={false}
             disablePictureInPicture
+            // @ts-expect-error — valid HTML attribute, not in React's types
+            disableRemotePlayback=""
             controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
             className={`w-full h-full object-cover -scale-x-100 pointer-events-none ${cameraOn ? '' : 'hidden'}`}
           />
