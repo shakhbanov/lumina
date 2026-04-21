@@ -68,12 +68,24 @@ export function MeetingPage() {
   // are not sent to the server, which is the only property that makes this
   // genuinely end-to-end. Deriving the key from the public room code — as the
   // old build did — was not E2EE, just obfuscation; we no longer do that.
+  //
+  // The key is cached in sessionStorage so reloads don't drop it (the user
+  // may reload the tab and the address bar keeps the fragment anyway, but on
+  // cross-tab share-link opens the fragment is authoritative).
   const e2eePassphrase = (() => {
-    const h = window.location.hash.replace(/^#/, '');
-    if (!h) return undefined;
-    const params = new URLSearchParams(h);
-    const key = params.get('key');
-    return key && key.length >= 16 ? key : undefined;
+    if (!code) return undefined;
+    const cacheKey = `lumina:roomkey:${code}`;
+    const fragment = window.location.hash.replace(/^#/, '');
+    if (fragment) {
+      const params = new URLSearchParams(fragment);
+      const key = params.get('key');
+      if (key && key.length >= 16) {
+        sessionStorage.setItem(cacheKey, key);
+        return key;
+      }
+    }
+    const cached = sessionStorage.getItem(cacheKey);
+    return cached && cached.length >= 16 ? cached : undefined;
   })();
 
   return (

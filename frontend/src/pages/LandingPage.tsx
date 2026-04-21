@@ -110,9 +110,15 @@ export function LandingPage() {
   }
 
   function handleGoToRoom() {
-    const match = state.createdLink.match(/\/room\/([a-z0-9]+)/);
-    if (match) {
-      navigate(`/room/${match[1]}/preview`);
+    // Preserve the #key=... fragment from the share link — without it the
+    // creator would enter the room without the E2EE key that the invitee
+    // already has, and LiveKit would fail to decrypt cross-peer video.
+    try {
+      const url = new URL(state.createdLink);
+      navigate({ pathname: `${url.pathname}/preview`, hash: url.hash });
+    } catch {
+      const match = state.createdLink.match(/\/room\/([a-z0-9]+)/);
+      if (match) navigate(`/room/${match[1]}/preview`);
     }
   }
 

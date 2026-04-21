@@ -138,6 +138,12 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       };
     }
 
+    // LiveKit E2EE (insertable streams) is battle-tested with VP8. VP9
+    // simulcast with insertable streams still has decoding edge-cases in
+    // Chromium/Safari, which in practice shows up as "one side sees black"
+    // for remote peers. Stick with VP8 whenever E2EE is on.
+    const videoCodec: 'vp8' | 'vp9' = e2eeEnabled ? 'vp8' : 'vp9';
+
     const room = new Room({
       adaptiveStream: true,
       dynacast: true,
@@ -154,8 +160,8 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       },
       publishDefaults: {
         simulcast: true,
-        videoCodec: 'vp9',
-        backupCodec: { codec: 'vp8', encoding: {} as VideoEncoding },
+        videoCodec,
+        backupCodec: videoCodec === 'vp9' ? { codec: 'vp8', encoding: {} as VideoEncoding } : undefined,
         videoSimulcastLayers: isMobile
           ? [VideoPresets.h180, VideoPresets.h360]
           : [VideoPresets.h180, VideoPresets.h360, VideoPresets.h540],
@@ -247,12 +253,16 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       await room.connect(url, token);
       console.log(`[LiveKit] Connected to room: ${room.name}`);
 
-      // Enable E2EE after connect
-      if (e2eeEnabled) {
-        await room.setE2EEEnabled(true);
-        setIsE2EEEnabled(true);
-        console.log('[LiveKit] E2EE enabled');
-      }
+      // Kick off E2EE enablement in parallel with track publishing — the
+      // worker handshake is the slowest part of the startup path and we
+      // don't actually need it to complete before publishing (outgoing
+      // frames are queued until the worker is ready).
+      const e2eePromise = e2eeEnabled
+        ? room.setE2EEEnabled(true).then(() => {
+            setIsE2EEEnabled(true);
+            console.log('[LiveKit] E2EE enabled');
+          })
+        : Promise.resolve();
 
       if (previewStream) {
         // Publish existing preview tracks directly — no camera re-acquisition delay
@@ -265,7 +275,7 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
             room.localParticipant.publishTrack(videoTrack, {
               source: Track.Source.Camera,
               simulcast: true,
-              videoCodec: 'vp9',
+              videoCodec,
               videoEncoding: isMobile
                 ? { maxBitrate: 800_000, maxFramerate: 24 }
                 : { maxBitrate: 1_700_000, maxFramerate: 30 },
@@ -300,6 +310,13 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
 
       console.log('[LiveKit] Browser noise suppression enabled');
       setIsNoiseFilterEnabled(true);
+
+      // Await E2EE setup without blocking the happy path — failures here
+      // should surface as warnings, not connection errors.
+      e2eePromise.catch((err) => {
+        console.warn('[LiveKit] E2EE setup failed', err);
+        setIsE2EEEnabled(false);
+      });
 
       updateLocalParticipant();
       updateRemoteParticipants();
