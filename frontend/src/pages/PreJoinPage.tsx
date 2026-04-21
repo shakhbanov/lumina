@@ -85,7 +85,11 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
           el.setAttribute('muted', '');
           el.setAttribute('playsinline', '');
           el.setAttribute('webkit-playsinline', 'true');
-          el.srcObject = stream;
+          // Attach a video-only clone of the stream. If the element sees an
+          // audio track, iOS Safari treats it as audible media and draws its
+          // native play/pause overlay on top — there is no CSS or attribute
+          // that suppresses that. Stripping the audio track kills the hint.
+          el.srcObject = new MediaStream(stream.getVideoTracks());
           el.play().catch(() => {});
         }
       } catch {
@@ -157,6 +161,7 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
             controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
             className={`w-full h-full object-cover -scale-x-100 pointer-events-none ${cameraOn ? '' : 'hidden'}`}
           />
+          {cameraOn && <div className="absolute inset-0 z-[1]" aria-hidden="true" />}
           {!cameraOn && (
             <div className="w-full h-full flex items-center justify-center">
               <div className="w-20 h-20 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">

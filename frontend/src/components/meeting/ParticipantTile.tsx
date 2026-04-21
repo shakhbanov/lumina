@@ -52,7 +52,13 @@ export const ParticipantTile = memo(function ParticipantTile({
     el.setAttribute('playsinline', '');
     el.setAttribute('webkit-playsinline', 'true');
     if (activeStream && el.srcObject !== activeStream) {
-      el.srcObject = activeStream;
+      // Attach only the video tracks — if the element sees any audio track,
+      // iOS Safari renders its native play/pause overlay and no CSS can
+      // hide it. Audio is routed through <audio> elements (AudioRenderer).
+      const videoOnly = activeStream.getAudioTracks().length > 0
+        ? new MediaStream(activeStream.getVideoTracks())
+        : activeStream;
+      el.srcObject = videoOnly;
     }
     el.play().catch(() => {});
   }, [activeStream]);
@@ -114,20 +120,25 @@ export const ParticipantTile = memo(function ParticipantTile({
       onDoubleClick={onDoubleClick}
     >
       {showVideo ? (
-        <video
-          ref={videoRefCallback}
-          autoPlay
-          playsInline
-          muted
-          controls={false}
-          disablePictureInPicture
-          // `disableRemotePlayback` stops browsers (Safari in particular)
-          // from drawing an AirPlay / cast overlay on top of the tile.
-          // @ts-expect-error — valid HTML attribute, not in React's types
-          disableRemotePlayback=""
-          controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
-          className={`w-full h-full ${fit} pointer-events-none select-none ${mirror ? '-scale-x-100' : ''}`}
-        />
+        <>
+          <video
+            ref={videoRefCallback}
+            autoPlay
+            playsInline
+            muted
+            controls={false}
+            disablePictureInPicture
+            // `disableRemotePlayback` stops browsers (Safari in particular)
+            // from drawing an AirPlay / cast overlay on top of the tile.
+            // @ts-expect-error — valid HTML attribute, not in React's types
+            disableRemotePlayback=""
+            controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+            className={`w-full h-full ${fit} pointer-events-none select-none ${mirror ? '-scale-x-100' : ''}`}
+          />
+          {/* Swallow any taps on the video region so Safari iOS cannot
+              show its native pause/play overlay in response to touches. */}
+          <div className="absolute inset-0 z-[1]" aria-hidden="true" />
+        </>
       ) : isConnecting ? (
         <div className="w-full h-full flex items-center justify-center bg-[var(--bg-secondary)] skeleton-pulse">
           <div
