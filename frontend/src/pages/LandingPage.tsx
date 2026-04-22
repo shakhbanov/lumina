@@ -11,6 +11,7 @@ import { InstallModal } from '../components/pwa/InstallModal';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { SiteFooter } from '../components/layout/PageLayout';
 import { Meta, type PageMeta } from '../components/seo/Meta';
+import { GitHubStars } from '../components/social/GitHubStars';
 
 interface State {
   loading: boolean;
@@ -174,11 +175,11 @@ export function LandingPage() {
             </span>
             <span className="font-semibold tracking-tight">Lumina</span>
           </Link>
-          <nav aria-label="Основная" className="hidden sm:flex items-center gap-5 text-sm text-[var(--text-secondary)]">
-            <Link to="/about" className="hover:text-white transition">О сервисе</Link>
-            <Link to="/faq" className="hover:text-white transition">FAQ</Link>
-            <Link to="/install" className="hover:text-white transition">Установка</Link>
-            <a href="https://github.com/shakhbanov/lumina" target="_blank" rel="noopener" className="hover:text-white transition">GitHub</a>
+          <nav aria-label="Основная" className="flex items-center gap-3 sm:gap-5 text-sm text-[var(--text-secondary)]">
+            <Link to="/about" className="hidden sm:inline hover:text-white transition">О сервисе</Link>
+            <Link to="/faq" className="hidden sm:inline hover:text-white transition">FAQ</Link>
+            <Link to="/install" className="hidden sm:inline hover:text-white transition">Установка</Link>
+            <GitHubStars />
           </nav>
         </div>
       </header>

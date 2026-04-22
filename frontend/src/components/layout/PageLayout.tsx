@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Video } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { GitHubStars } from '../social/GitHubStars';
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -21,11 +22,12 @@ export function PageLayout({ children, heroTitle, heroLead }: PageLayoutProps) {
             </span>
             <span className="text-xl font-bold tracking-tight group-hover:text-white/90">Lumina</span>
           </Link>
-          <nav aria-label="Основная" className="hidden sm:flex items-center gap-6 text-sm text-[var(--text-secondary)]">
-            <Link to="/about" className="hover:text-white transition">О сервисе</Link>
-            <Link to="/faq" className="hover:text-white transition">FAQ</Link>
-            <Link to="/install" className="hover:text-white transition">Установка</Link>
-            <Link to="/" className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] text-white px-3 py-1.5 font-medium hover:brightness-110 transition">
+          <nav aria-label="Основная" className="flex items-center gap-3 sm:gap-6 text-sm text-[var(--text-secondary)]">
+            <Link to="/about" className="hidden sm:inline hover:text-white transition">О сервисе</Link>
+            <Link to="/faq" className="hidden sm:inline hover:text-white transition">FAQ</Link>
+            <Link to="/install" className="hidden sm:inline hover:text-white transition">Установка</Link>
+            <GitHubStars />
+            <Link to="/" className="hidden sm:inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] text-white px-3 py-1.5 font-medium hover:brightness-110 transition">
               Начать встречу
             </Link>
           </nav>
