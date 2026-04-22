@@ -9,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 export type Platform = 'ios' | 'android' | 'desktop';
 
 function detectPlatform(): Platform {
+  if (typeof navigator === 'undefined' || typeof window === 'undefined') return 'desktop';
   const ua = navigator.userAgent;
   if (/iPad|iPhone|iPod/.test(ua) && !('MSStream' in window)) return 'ios';
   if (/Android/.test(ua)) return 'android';

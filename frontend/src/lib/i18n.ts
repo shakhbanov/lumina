@@ -1,4 +1,4 @@
-type Locale = 'ru' | 'en';
+export type Locale = 'ru' | 'en';
 
 const translations: Record<Locale, Record<string, string>> = {
   ru: {
@@ -203,6 +203,7 @@ const translations: Record<Locale, Record<string, string>> = {
 };
 
 function detectLocale(): Locale {
+  if (typeof navigator === 'undefined') return 'ru';
   const lang = navigator.language.slice(0, 2).toLowerCase();
   return lang === 'ru' ? 'ru' : 'en';
 }

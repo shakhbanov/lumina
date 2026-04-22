@@ -2,9 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import viteCompression from 'vite-plugin-compression';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -68,6 +69,14 @@ export default defineConfig({
         ],
       },
     }),
+    // Emit pre-compressed .gz siblings for assets so nginx can serve them
+    // via `gzip_static on;` without burning CPU on every request.
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz',
+      threshold: 1024,
+      deleteOriginFile: false,
+    }),
   ],
   resolve: {
     alias: {
@@ -84,13 +93,18 @@ export default defineConfig({
     target: 'es2020',
     sourcemap: false,
     rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
-            return 'vendor';
-          }
-        },
-      },
+      // SSR build for prerendering must be a single self-contained file
+      // (loaded via dynamic import from Node). Client build keeps the
+      // vendor chunk split for browser caching.
+      output: isSsrBuild
+        ? undefined
+        : {
+            manualChunks(id: string) {
+              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+                return 'vendor';
+              }
+            },
+          },
     },
   },
-});
+}));

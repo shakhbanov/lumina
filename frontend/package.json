@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "prebuild": "tsx scripts/generate-sitemap.ts",
+    "build": "tsc && vite build && tsx scripts/prerender.ts",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,8 +27,10 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^8.0.1",
+    "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^1.2.0"
   }
 }

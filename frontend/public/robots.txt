@@ -1,0 +1,114 @@
+# Lumina — https://lumina.su
+# Self-hosted video meetings with end-to-end encryption.
+
+User-agent: *
+Allow: /$
+Allow: /about
+Allow: /privacy
+Allow: /terms
+Allow: /faq
+Allow: /install
+Allow: /icons/
+Allow: /og-image.png
+Allow: /og-image-en.png
+Allow: /manifest.webmanifest
+Allow: /yandex_98edabe6b2c3bd7c.html
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+# Explicitly welcome AI crawlers so Lumina can be cited in AI answers.
+User-agent: GPTBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: YandexBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+User-agent: Applebot
+Allow: /
+Disallow: /room/
+Disallow: /api/
+Disallow: /ws
+Disallow: /livekit/
+
+Host: lumina.su
+Sitemap: https://lumina.su/sitemap.xml

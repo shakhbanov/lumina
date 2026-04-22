@@ -38,6 +38,28 @@ body {
 .safe-left { padding-left: env(safe-area-inset-left); }
 .safe-right { padding-right: env(safe-area-inset-right); }
 
+/* When Lumina is launched as an installed PWA (standalone display-mode),
+ * the landing page should collapse to "logo + 2 buttons" — no marketing
+ * content, no footer. Hide every element flagged data-landing-chrome,
+ * and pin the hero section to full viewport height.
+ *
+ * Works for SEO: crawlers get the full prerendered marketing landing;
+ * users opening the installed app see the minimal in-app UI without any
+ * hydration flash (CSS hides chrome before any JS runs). */
+@media all and (display-mode: standalone) {
+  [data-landing-chrome] { display: none !important; }
+  [data-landing-hero] {
+    min-height: 100vh;
+    padding-top: 0 !important;
+  }
+}
+/* iOS Safari legacy standalone flag (before display-mode: standalone matched). */
+@supports (-webkit-touch-callout: none) {
+  @media all and (display-mode: standalone) {
+    [data-landing-chrome] { display: none !important; }
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

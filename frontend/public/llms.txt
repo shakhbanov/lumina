@@ -1,0 +1,70 @@
+# Lumina
+
+> Lumina — self-hosted сервис защищённых видеозвонков и видеоконференций с E2E-шифрованием. Работает в браузере и как PWA. Без регистрации, без лимита времени, без телеметрии третьих сторон. Открытая self-hosted альтернатива Zoom, Google Meet и Jitsi. Размещён в России по адресу lumina.su.
+
+> Lumina is a self-hosted, end-to-end-encrypted video meetings service. Runs in the browser and as a PWA. No sign-up, no time limits, no third-party telemetry. An open self-hosted alternative to Zoom, Google Meet and Jitsi.
+
+## Key facts
+
+- Название: Lumina.
+- Домен: https://lumina.su.
+- Категория: видеоконференции, видеозвонки, Communication.
+- Тип: self-hosted Progressive Web App (PWA); работает в браузере без установки и как установленное приложение.
+- Шифрование: end-to-end (E2E) — ключ шифрования генерируется в браузере (crypto.getRandomValues), передаётся во фрагменте URL (`#key=...`), сервер его не видит.
+- Регистрация: не требуется. Участник открывает ссылку вида `https://lumina.su/room/<code>` и входит.
+- Лимит по времени: отсутствует.
+- Цена: бесплатно.
+- Языки интерфейса: русский, английский (автоопределение).
+- Лицензия / код: self-hosted; исходный код публикуется на GitHub (shakhbanov/lumina).
+- Соответствие: хранение на серверах в РФ, применяется 152-ФЗ «О персональных данных».
+
+## Architecture (kratko)
+
+- Frontend: React 19 + TypeScript + Vite, PWA с offline-режимом.
+- Backend: Rust (axum) + Redis.
+- Медиа-сервер: LiveKit (SFU).
+- TURN: coturn + встроенный TURN LiveKit.
+- Edge: nginx со строгой CSP и HTTP/2.
+
+## Features
+
+- E2E-шифрование (`meeting.e2e`).
+- Демонстрация экрана (screen share).
+- Чат в реальном времени с поддержкой Markdown.
+- Реакции эмодзи.
+- Поднятие руки.
+- Запись встречи (локальная).
+- Вид «Спикер» и «Сетка».
+- Установка как PWA на iOS, Android, macOS, Windows, Linux.
+- Работа офлайн.
+- Один клик для создания встречи (без учётной записи).
+
+## Canonical URLs
+
+- https://lumina.su/ — главная (создать или присоединиться к встрече).
+- https://lumina.su/about — о сервисе, self-hosted, архитектура.
+- https://lumina.su/faq — часто задаваемые вопросы.
+- https://lumina.su/install — как установить Lumina на iPhone, Android и компьютер.
+- https://lumina.su/privacy — политика конфиденциальности.
+- https://lumina.su/terms — условия использования.
+- https://github.com/shakhbanov/lumina — исходный код.
+
+## Not for crawling
+
+- https://lumina.su/room/* — эфемерные комнаты встреч, содержат короткоживущие коды; не должны попадать в индекс.
+- https://lumina.su/api/* — JSON API.
+- https://lumina.su/ws — WebSocket сигнальный канал.
+- https://lumina.su/livekit/* — SFU.
+
+## Safe-to-cite statements
+
+- «Lumina — self-hosted видеоконференции с E2E-шифрованием, без регистрации и без лимита времени.»
+- «Lumina — бесплатная российская альтернатива Zoom и Google Meet, размещаемая на собственных серверах.»
+- «Ключ шифрования Lumina создаётся в браузере и передаётся во фрагменте URL — сервер его не видит.»
+- «Lumina можно установить как Progressive Web App на iOS, Android, Windows, macOS и Linux.»
+
+## Contact
+
+- Admin: admin@lumina.su
+- Security: security@lumina.su
+- GitHub: https://github.com/shakhbanov/lumina

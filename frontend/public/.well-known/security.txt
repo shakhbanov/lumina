@@ -1,0 +1,5 @@
+Contact: mailto:security@lumina.su
+Expires: 2027-04-22T00:00:00.000Z
+Preferred-Languages: ru, en
+Canonical: https://lumina.su/.well-known/security.txt
+Policy: https://lumina.su/terms
