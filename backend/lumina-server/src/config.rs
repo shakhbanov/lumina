@@ -34,6 +34,14 @@ pub struct Config {
 
     // Backpressure: bounded channel capacity per WS connection
     pub ws_channel_capacity: usize,
+
+    // End-to-end encryption of media (LiveKit Insertable Streams).
+    // Default OFF because Insertable Streams is not supported on iOS
+    // Safari < 17 (= iPhone 8 and older). When E2EE is negotiated by
+    // only a subset of participants, they can't see each other — so
+    // turning it on globally breaks heterogeneous rooms. Set to true
+    // in self-hosted deployments where all clients are modern.
+    pub e2ee_enabled: bool,
 }
 
 /// Minimum acceptable entropy (in bytes) for secret material.
@@ -107,6 +115,9 @@ impl Config {
                 .ok()
                 .and_then(|p| p.parse().ok())
                 .unwrap_or(256),
+            e2ee_enabled: env::var("LUMINA_E2EE_ENABLED")
+                .map(|v| matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+                .unwrap_or(false),
         }
     }
 

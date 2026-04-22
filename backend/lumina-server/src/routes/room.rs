@@ -69,7 +69,12 @@ pub async fn create_room(
     let creator_token = auth::create_room_creator_token(&state.config.jwt_secret, &code);
     // Per-room E2EE key: 32 random bytes, base64-urlsafe. Handed to every
     // authenticated joiner; the SFU (LiveKit) still doesn't see it.
-    let e2ee_key = generate_e2ee_key();
+    // Gated by LUMINA_E2EE_ENABLED — see `ensure_e2ee_key` for rationale.
+    let e2ee_key = if state.config.e2ee_enabled {
+        generate_e2ee_key()
+    } else {
+        String::new()
+    };
 
     let room = crate::state::redis_store::RedisRoom {
         code: code.clone(),
@@ -91,11 +96,13 @@ pub async fn create_room(
         ));
     }
 
-    if let Err(e) = state.redis.set_e2ee_key(&code, &e2ee_key).await {
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": format!("Failed to init E2EE key: {e}")})),
-        ));
+    if !e2ee_key.is_empty() {
+        if let Err(e) = state.redis.set_e2ee_key(&code, &e2ee_key).await {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": format!("Failed to init E2EE key: {e}")})),
+            ));
+        }
     }
 
     crate::metrics::ROOMS_CREATED_TOTAL.inc();
@@ -257,7 +264,17 @@ pub async fn join_room_public(
 /// Return the room's E2EE key, minting one atomically if the room predates
 /// the feature. Every participant in the same room receives the same value,
 /// so clients never disagree.
+///
+/// When `config.e2ee_enabled` is false (default), we return an empty string
+/// so the client skips Insertable Streams. Rationale: iOS Safari < 17 does
+/// not implement Insertable Streams, so an iPhone 8 ↔ Android Chrome room
+/// ends up with one encrypting side and one plaintext side — and neither
+/// can see the other. Self-hosters whose entire audience runs modern
+/// browsers can opt in with LUMINA_E2EE_ENABLED=true.
 async fn ensure_e2ee_key(state: &AppState, code: &str) -> String {
+    if !state.config.e2ee_enabled {
+        return String::new();
+    }
     if let Ok(Some(existing)) = state.redis.get_e2ee_key(code).await {
         if !existing.is_empty() {
             return existing;
