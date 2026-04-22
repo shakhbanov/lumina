@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, memo } from 'react';
+import { memo } from 'react';
 import { MicOff, Hand, Crown, Loader2, MonitorUp } from 'lucide-react';
 import { t } from '../../lib/i18n';
 import type { Participant } from '../../types';
+import { StreamCanvas } from './StreamCanvas';
 
 interface ParticipantTileProps {
   participant: Participant;
@@ -33,74 +34,10 @@ export const ParticipantTile = memo(function ParticipantTile({
   onDoubleClick,
   className = '',
 }: ParticipantTileProps) {
-  const videoElRef = useRef<HTMLVideoElement | null>(null);
-
   // Prefer screen share over camera when present (remote screen sharing is the
   // whole point of the feature, so the tile should show the screen).
   const activeStream = screenStream ?? stream ?? null;
   const isShowingScreen = !!screenStream;
-
-  const videoRefCallback = useCallback((el: HTMLVideoElement | null) => {
-    videoElRef.current = el;
-    if (!el) return;
-    // Force muted as a DOM property (React's JSX attribute doesn't always
-    // stick across reattachments). Without this, Safari draws a huge
-    // tap-to-play overlay because it considers the video "not autoplayable".
-    el.muted = true;
-    el.defaultMuted = true;
-    el.setAttribute('muted', '');
-    el.setAttribute('playsinline', '');
-    el.setAttribute('webkit-playsinline', 'true');
-    if (activeStream && el.srcObject !== activeStream) {
-      // Attach only the video tracks — if the element sees any audio track,
-      // iOS Safari renders its native play/pause overlay and no CSS can
-      // hide it. Audio is routed through <audio> elements (AudioRenderer).
-      const videoOnly = activeStream.getAudioTracks().length > 0
-        ? new MediaStream(activeStream.getVideoTracks())
-        : activeStream;
-      el.srcObject = videoOnly;
-    }
-    el.play().catch(() => {});
-  }, [activeStream]);
-
-  // Re-attach / replay when the stream object changes under the same element.
-  useEffect(() => {
-    const el = videoElRef.current;
-    if (!el) return;
-    if (el.srcObject !== activeStream) el.srcObject = activeStream ?? null;
-    if (activeStream) el.play().catch(() => {});
-  }, [activeStream]);
-
-  // When a remote track's first frames arrive, `MediaStreamTrack.muted` flips
-  // from true → false without a React re-render. Listen for that so the avatar
-  // placeholder gets replaced by the live video once frames actually flow.
-  useEffect(() => {
-    if (!activeStream) return;
-    const tracks = activeStream.getVideoTracks();
-    const el = videoElRef.current;
-    const onUnmute = () => el?.play().catch(() => {});
-    tracks.forEach((tr) => tr.addEventListener('unmute', onUnmute));
-    return () => tracks.forEach((tr) => tr.removeEventListener('unmute', onUnmute));
-  }, [activeStream]);
-
-  // Safari/iOS pause videos when the tab is backgrounded, then show a large
-  // tap-to-play overlay when the user returns. Resume playback ourselves so
-  // the overlay never has a reason to appear.
-  useEffect(() => {
-    const replay = () => {
-      const el = videoElRef.current;
-      if (!el || !el.srcObject) return;
-      if (el.paused) el.play().catch(() => {});
-    };
-    document.addEventListener('visibilitychange', replay);
-    window.addEventListener('focus', replay);
-    window.addEventListener('pageshow', replay);
-    return () => {
-      document.removeEventListener('visibilitychange', replay);
-      window.removeEventListener('focus', replay);
-      window.removeEventListener('pageshow', replay);
-    };
-  }, []);
 
   // Trust LiveKit's signals (participant.isCameraOff / isScreenSharing) rather
   // than MediaStreamTrack.muted — the latter is briefly true on subscribe and
@@ -112,7 +49,7 @@ export const ParticipantTile = memo(function ParticipantTile({
   const avatarHue = nameToHue(participant.name);
   const avatarBg = `hsl(${avatarHue}, 55%, 42%)`;
   const mirror = isMirrored && !isShowingScreen;
-  const fit = isShowingScreen ? 'object-contain' : 'object-contain';
+  const fit: 'cover' | 'contain' = 'contain';
 
   return (
     <div
@@ -120,25 +57,12 @@ export const ParticipantTile = memo(function ParticipantTile({
       onDoubleClick={onDoubleClick}
     >
       {showVideo ? (
-        <>
-          <video
-            ref={videoRefCallback}
-            autoPlay
-            playsInline
-            muted
-            controls={false}
-            disablePictureInPicture
-            // `disableRemotePlayback` stops browsers (Safari in particular)
-            // from drawing an AirPlay / cast overlay on top of the tile.
-            // @ts-expect-error — valid HTML attribute, not in React's types
-            disableRemotePlayback=""
-            controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
-            className={`w-full h-full ${fit} pointer-events-none select-none ${mirror ? '-scale-x-100' : ''}`}
-          />
-          {/* Swallow any taps on the video region so Safari iOS cannot
-              show its native pause/play overlay in response to touches. */}
-          <div className="absolute inset-0 z-[1]" aria-hidden="true" />
-        </>
+        <StreamCanvas
+          stream={activeStream}
+          mirror={mirror}
+          fit={fit}
+          className="w-full h-full"
+        />
       ) : isConnecting ? (
         <div className="w-full h-full flex items-center justify-center bg-[var(--bg-secondary)] skeleton-pulse">
           <div

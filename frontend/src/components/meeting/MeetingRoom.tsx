@@ -250,10 +250,24 @@ export function MeetingRoom({ roomCode, userName, initialCamera, initialMic, onL
     }
   }, [lk.toggleScreenShare, ws.send, roomCode, state.myParticipantId, addToast]);
 
-  const handleLeaveConfirm = useCallback(() => {
+  const handleLeaveConfirm = useCallback(async () => {
     dispatch({ type: 'SET_LEAVE_MODAL', show: false });
     ws.send('meeting.leave', { room_code: roomCode, participant_id: state.myParticipantId });
-    lk.disconnect();
+    // Drop the cached join token so a subsequent rejoin mints a fresh
+    // identity via /join instead of re-auth. Reusing the same identity
+    // across an explicit leave+rejoin makes the LiveKit SFU race between
+    // kicking the old participant and accepting the new one — during
+    // that window outgoing frames from the new connection are dropped
+    // (video) and remote frames arrive before E2EE transforms are
+    // attached to the fresh PeerConnection (audio decodes as noise).
+    sessionStorage.removeItem(`lumina:join:${roomCode}`);
+    // Await disconnect so the SFU processes the Leave cleanly before the
+    // user can trigger a new connect from the lobby.
+    try {
+      await lk.disconnect();
+    } catch {
+      // disconnect is best-effort; navigate away regardless.
+    }
     ws.disconnect();
     onLeave();
   }, [ws, lk, roomCode, state.myParticipantId, onLeave]);

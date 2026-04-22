@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, CameraOff, Mic, MicOff, ArrowRight } from 'lucide-react';
 import { t, getLocale } from '../lib/i18n';
 import { stashStream } from '../lib/stream-store';
+import { StreamCanvas } from '../components/meeting/StreamCanvas';
 
 const FUNNY_NAMES_RU = [
   'Амурский тигр', 'Морской котик', 'Снежный барс', 'Уссурийский ёжик',
@@ -41,13 +42,13 @@ interface PreJoinPageProps {
 export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [name, setName] = useState(() => localStorage.getItem('lumina-name') || '');
   const [cameraOn, setCameraOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
   const [error, setError] = useState('');
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   // Get camera preview — acquire once, toggle via track.enabled
   useEffect(() => {
@@ -78,20 +79,7 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
         // Apply initial toggle states
         stream.getVideoTracks().forEach((t) => (t.enabled = cameraOn));
         stream.getAudioTracks().forEach((t) => (t.enabled = micOn));
-        if (videoRef.current) {
-          const el = videoRef.current;
-          el.muted = true;
-          el.defaultMuted = true;
-          el.setAttribute('muted', '');
-          el.setAttribute('playsinline', '');
-          el.setAttribute('webkit-playsinline', 'true');
-          // Attach a video-only clone of the stream. If the element sees an
-          // audio track, iOS Safari treats it as audible media and draws its
-          // native play/pause overlay on top — there is no CSS or attribute
-          // that suppresses that. Stripping the audio track kills the hint.
-          el.srcObject = new MediaStream(stream.getVideoTracks());
-          el.play().catch(() => {});
-        }
+        setPreviewStream(stream);
       } catch {
         // Camera/mic not available
       }
@@ -149,19 +137,14 @@ export function PreJoinPage({ onJoin }: PreJoinPageProps = {}) {
 
         {/* Video preview */}
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)]">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            controls={false}
-            disablePictureInPicture
-            // @ts-expect-error — valid HTML attribute, not in React's types
-            disableRemotePlayback=""
-            controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
-            className={`w-full h-full object-cover -scale-x-100 pointer-events-none ${cameraOn ? '' : 'hidden'}`}
-          />
-          {cameraOn && <div className="absolute inset-0 z-[1]" aria-hidden="true" />}
+          {cameraOn && (
+            <StreamCanvas
+              stream={previewStream}
+              mirror
+              fit="cover"
+              className="w-full h-full"
+            />
+          )}
           {!cameraOn && (
             <div className="w-full h-full flex items-center justify-center">
               <div className="w-20 h-20 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">

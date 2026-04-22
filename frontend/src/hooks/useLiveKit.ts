@@ -289,16 +289,23 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
       await room.connect(url, token);
       console.log(`[LiveKit] Connected to room: ${room.name}`);
 
-      // Kick off E2EE enablement in parallel with track publishing — the
-      // worker handshake is the slowest part of the startup path and we
-      // don't actually need it to complete before publishing (outgoing
-      // frames are queued until the worker is ready).
-      const e2eePromise = e2eeEnabled
-        ? room.setE2EEEnabled(true).then(() => {
-            setIsE2EEEnabled(true);
-            console.log('[LiveKit] E2EE enabled');
-          })
-        : Promise.resolve();
+      // E2EE worker must be attached to all senders/receivers BEFORE any
+      // track crosses the PeerConnection. On first-connect both peers are
+      // simultaneously in the handshake window so out-of-sync frames are
+      // tolerated; on rejoin the other peer is already in a steady
+      // encrypted state — publishing/subscribing before the worker is
+      // ready leaks raw frames and the remote end decodes them as noise
+      // (audio → "technical waves", video → black/scrambled).
+      if (e2eeEnabled) {
+        try {
+          await room.setE2EEEnabled(true);
+          setIsE2EEEnabled(true);
+          console.log('[LiveKit] E2EE enabled');
+        } catch (err) {
+          console.warn('[LiveKit] E2EE setup failed', err);
+          setIsE2EEEnabled(false);
+        }
+      }
 
       if (previewStream) {
         // Publish existing preview tracks directly — no camera re-acquisition delay
@@ -346,13 +353,6 @@ export function useLiveKit(options: UseLiveKitOptions = {}) {
 
       console.log('[LiveKit] Browser noise suppression enabled');
       setIsNoiseFilterEnabled(true);
-
-      // Await E2EE setup without blocking the happy path — failures here
-      // should surface as warnings, not connection errors.
-      e2eePromise.catch((err) => {
-        console.warn('[LiveKit] E2EE setup failed', err);
-        setIsE2EEEnabled(false);
-      });
 
       updateLocalParticipant();
       updateRemoteParticipants();
